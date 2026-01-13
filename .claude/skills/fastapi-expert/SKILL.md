@@ -241,7 +241,7 @@ async def get_me(user: CurrentUser):
 | CORS configuration | `references/cors-config.md` | Cross-origin setup |
 | Rate limiting | `references/rate-limiting.md` | API protection |
 | Pydantic patterns | `references/pydantic-patterns.md` | Request/response models |
-| Authentication | `references/authentication.md` | OAuth2/JWT setup |
+| Authentication | `references/authentication.md` | OAuth2/JWT, Argon2 hashing |
 | Background tasks | `references/background-tasks.md` | Async processing |
 | File uploads | `references/file-uploads.md` | Handling files |
 | Testing | `references/testing.md` | Test patterns |
@@ -368,6 +368,7 @@ async def login(request: Request):
 - [ ] Rate limiting on sensitive endpoints
 - [ ] Input validation (Pydantic models)
 - [ ] Response models (no data leakage)
+- [ ] Secure password hashing (Argon2 via pwdlib)
 - [ ] Health check endpoint
 - [ ] OpenAPI documentation complete
 - [ ] Tests with good coverage

@@ -1,5 +1,28 @@
 # Authentication in FastAPI
 
+## Installation
+
+```bash
+# Required packages for OAuth2 + JWT + Argon2 hashing
+pip install fastapi python-jose[cryptography] python-multipart pwdlib[argon2]
+
+# Or with uv
+uv add fastapi python-jose[cryptography] python-multipart pwdlib[argon2]
+```
+
+## Why Argon2?
+
+**Argon2** is the current gold standard for password hashing:
+
+- **Memory-hard**: Resistant to GPU and ASIC attacks
+- **Configurable**: Adjust time cost, memory cost, and parallelism
+- **Winner**: Password Hashing Competition (2015)
+- **Modern**: Designed to resist modern attack vectors
+
+**Previous standard (bcrypt)** is still secure but less resistant to specialized hardware attacks.
+
+---
+
 ## OAuth2 with Password Flow
 
 ### Basic Setup
@@ -10,7 +33,8 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
+from pwdlib.hashers.argon2 import Argon2Hasher
 from pydantic import BaseModel
 
 # Configuration
@@ -18,8 +42,9 @@ SECRET_KEY = "your-secret-key"  # Use env variable!
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing with Argon2 (current gold standard)
+# Argon2 is memory-hard and resistant to GPU-based attacks
+pwd_hasher = PasswordHash((Argon2Hasher(),))
 
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -43,11 +68,51 @@ class TokenData(BaseModel):
 
 ```python
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify a plaintext password against a hashed password.
+
+    Supports automatic algorithm migration if hash format changes.
+    """
+    return pwd_hasher.verify(plain_password, hashed_password)
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    """Hash a password using Argon2id.
+
+    Returns hash with embedded parameters like:
+    $argon2id$v=19$m=65536,t=3,p=4$...$...
+
+    Parameters are configurable for security/performance balance.
+    """
+    return pwd_hasher.hash(password)
 ```
+
+### Advanced: Custom Argon2 Configuration
+
+```python
+from pwdlib import PasswordHash
+from pwdlib.hashers.argon2 import Argon2Hasher
+
+# Custom parameters for higher security (slower)
+pwd_hasher = PasswordHash((
+    Argon2Hasher(
+        memory_cost=65536,      # Memory in KiB (default: 65536 = 64MB)
+        time_cost=3,            # Number of iterations (default: 3)
+        parallelism=4,          # Number of parallel threads (default: 4)
+        hash_len=32,            # Hash length in bytes (default: 32)
+        salt_len=16,            # Salt length in bytes (default: 16)
+    ),
+))
+
+# Or for faster performance (lower security, not recommended for production)
+pwd_hasher_fast = PasswordHash((
+    Argon2Hasher(
+        memory_cost=32768,      # 32MB (half the default)
+        time_cost=2,            # 2 iterations
+        parallelism=2,          # 2 threads
+    ),
+))
+```
+
+**Recommendation**: Use defaults unless you have specific requirements. Increase `memory_cost` and `time_cost` for high-security applications.
 
 ### Token Creation
 

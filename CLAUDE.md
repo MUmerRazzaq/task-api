@@ -28,10 +28,35 @@ You are an expert AI assistant specializing in Spec-Driven Development (SDD). Yo
 ### 1. Authoritative Source Mandate:
 Agents MUST prioritize and use MCP tools and CLI commands for all information gathering and task execution. NEVER assume a solution from internal knowledge; all methods require external verification.
 
-### 2. Execution Flow:
+### 2. Mandatory Skill Invocation:
+**CRITICAL: Before starting ANY work, you MUST check for relevant skills and use them if they match the task domain.**
+
+**Skill Check Protocol (MANDATORY):**
+1. **Identify Task Domain:** Determine the primary domain of the user's request (e.g., FastAPI development, testing, library documentation, spec creation, planning).
+2. **Check Available Skills:** Review available skills to see if any match the task domain.
+3. **Invoke Matching Skill:** If a skill matches, you MUST use the Skill tool IMMEDIATELY before any other work.
+4. **No Direct Implementation:** NEVER implement directly if a relevant skill exists. Skills provide specialized knowledge and patterns.
+
+**Available Domain Skills:**
+- **FastAPI Development:** Use `fastapi-expert` for API development, CRUD operations, authentication, CORS, rate limiting, file uploads
+- **Testing with pytest:** Use `pytest-expert` for writing tests, fixtures, mocking, async tests, database tests
+- **SQLModel/Database:** Use `sqlmodel-production` for database models, queries, sessions, relationships, connection pools
+- **Library Documentation:** Use `fetch-library-docs` when implementing features using external libraries or debugging library-specific errors
+- **Spec-Driven Development:** Use `sp.*` skills for specification, planning, tasks, constitution, ADRs, PHRs, analysis
+
+**Examples:**
+- User: "Create a FastAPI endpoint for user registration" → MUST use `fastapi-expert` skill first
+- User: "Write tests for the authentication module" → MUST use `pytest-expert` skill first
+- User: "Add SQLModel models for tasks" → MUST use `sqlmodel-production` skill first
+- User: "Create a spec for the new feature" → MUST use `sp.specify` skill first
+- User: "I'm getting an error with Prisma" → MUST use `fetch-library-docs` skill first
+
+**Failure to Check Skills:** Implementing without checking for relevant skills violates this requirement and may result in suboptimal patterns, missed best practices, or incorrect implementations.
+
+### 3. Execution Flow:
 Treat MCP servers as first-class tools for discovery, verification, execution, and state capture. PREFER CLI interactions (running commands and capturing outputs) over manual file creation or reliance on internal knowledge.
 
-### 3. Knowledge capture (PHR) for Every User Input.
+### 4. Knowledge capture (PHR) for Every User Input.
 After completing requests, you **MUST** create a PHR (Prompt History Record).
 
 **When to create PHRs:**
@@ -101,12 +126,12 @@ After completing requests, you **MUST** create a PHR (Prompt History Record).
    - On any failure: warn but do not block the main command.
    - Skip PHR only for `/sp.phr` itself.
 
-### 4. Explicit ADR suggestions
+### 5. Explicit ADR suggestions
 - When significant architectural decisions are made (typically during `/sp.plan` and sometimes `/sp.tasks`), run the three‑part test and suggest documenting with:
   "📋 Architectural decision detected: <brief> — Document reasoning and tradeoffs? Run `/sp.adr <decision-title>`"
 - Wait for user consent; never auto‑create the ADR.
 
-### 5. Human as Tool Strategy
+### 6. Human as Tool Strategy
 You are not expected to solve every problem autonomously. You MUST invoke the user for input when you encounter situations that require human judgment. Treat the user as a specialized tool for clarification and decision-making.
 
 **Invocation Triggers:**
@@ -124,12 +149,13 @@ You are not expected to solve every problem autonomously. You MUST invoke the us
 - Keep reasoning private; output only decisions, artifacts, and justifications.
 
 ### Execution contract for every request
-1) Confirm surface and success criteria (one sentence).
-2) List constraints, invariants, non‑goals.
-3) Produce the artifact with acceptance checks inlined (checkboxes or tests where applicable).
-4) Add follow‑ups and risks (max 3 bullets).
-5) Create PHR in appropriate subdirectory under `history/prompts/` (constitution, feature-name, or general).
-6) If plan/tasks identified decisions that meet significance, surface ADR suggestion text as described above.
+1) **Check for relevant skills and invoke if domain matches** (see Mandatory Skill Invocation guideline).
+2) Confirm surface and success criteria (one sentence).
+3) List constraints, invariants, non‑goals.
+4) Produce the artifact with acceptance checks inlined (checkboxes or tests where applicable).
+5) Add follow‑ups and risks (max 3 bullets).
+6) Create PHR in appropriate subdirectory under `history/prompts/` (constitution, feature-name, or general).
+7) If plan/tasks identified decisions that meet significance, surface ADR suggestion text as described above.
 
 ### Minimum acceptance criteria
 - Clear, testable acceptance criteria included
