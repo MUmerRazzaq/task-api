@@ -1,0 +1,319 @@
+openapi: 3.1.0
+info:
+  title: Task Management API
+  version: 1.0.0
+  description: |
+    RESTful API for managing tasks with CRUD operations.
+
+    Features:
+    - Create tasks with title and optional description
+    - Retrieve all tasks or individual tasks by ID
+    - Update task title, description, and completion status
+    - Delete tasks permanently
+    - Automatic timestamp tracking
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+
+tags:
+  - name: tasks
+    description: Task management operations
+
+paths:
+  /tasks:
+    get:
+      summary: List all tasks
+      description: Retrieve a list of all tasks, ordered by creation date (newest first)
+      operationId: listTasks
+      tags:
+        - tasks
+      responses:
+        '200':
+          description: Successful response with list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskResponse'
+              example:
+                - id: "550e8400-e29b-41d4-a716-446655440000"
+                  title: "Write documentation"
+                  description: "Create API docs for task endpoints"
+                  is_completed: false
+                  created_at: "2026-01-13T10:30:00Z"
+                  updated_at: "2026-01-13T10:30:00Z"
+                - id: "660e8400-e29b-41d4-a716-446655440001"
+                  title: "Deploy to production"
+                  description: null
+                  is_completed: true
+                  created_at: "2026-01-13T09:15:00Z"
+                  updated_at: "2026-01-13T11:45:00Z"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create a new task
+      description: Create a new task with title and optional description
+      operationId: createTask
+      tags:
+        - tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+            example:
+              title: "Write documentation"
+              description: "Create API docs for task endpoints"
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                title: "Write documentation"
+                description: "Create API docs for task endpoints"
+                is_completed: false
+                created_at: "2026-01-13T10:30:00Z"
+                updated_at: "2026-01-13T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /tasks/{task_id}:
+    get:
+      summary: Get a specific task
+      description: Retrieve detailed information about a specific task by its ID
+      operationId: getTask
+      tags:
+        - tasks
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Successful response with task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                title: "Write documentation"
+                description: "Create API docs for task endpoints"
+                is_completed: false
+                created_at: "2026-01-13T10:30:00Z"
+                updated_at: "2026-01-13T10:30:00Z"
+        '404':
+          $ref: '#/components/responses/TaskNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update a task
+      description: Update task title, description, and/or completion status
+      operationId: updateTask
+      tags:
+        - tasks
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+            example:
+              title: "Finalize documentation"
+              description: "Add examples and review"
+              is_completed: true
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                title: "Finalize documentation"
+                description: "Add examples and review"
+                is_completed: true
+                created_at: "2026-01-13T10:30:00Z"
+                updated_at: "2026-01-13T12:00:00Z"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/TaskNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete a task
+      description: Permanently delete a task from the system
+      operationId: deleteTask
+      tags:
+        - tasks
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '204':
+          description: Task deleted successfully (no content)
+        '404':
+          $ref: '#/components/responses/TaskNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  parameters:
+    TaskId:
+      name: task_id
+      in: path
+      required: true
+      description: UUID of the task
+      schema:
+        type: string
+        format: uuid
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+  schemas:
+    TaskCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Brief description of the work (non-empty, trimmed)
+          example: "Write documentation"
+        description:
+          type: string
+          nullable: true
+          description: Detailed information about the task (optional)
+          example: "Create API docs for task endpoints"
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Updated task title
+          example: "Finalize documentation"
+        description:
+          type: string
+          nullable: true
+          description: Updated task description
+          example: "Add examples and review"
+        is_completed:
+          type: boolean
+          description: Updated completion status
+          example: true
+      description: At least one field must be provided for update
+
+    TaskResponse:
+      type: object
+      required:
+        - id
+        - title
+        - is_completed
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique task identifier (system-generated)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        title:
+          type: string
+          description: Brief description of the work
+          example: "Write documentation"
+        description:
+          type: string
+          nullable: true
+          description: Detailed information about the task
+          example: "Create API docs for task endpoints"
+        is_completed:
+          type: boolean
+          description: Completion status
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: UTC timestamp when task was created (ISO 8601)
+          example: "2026-01-13T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: UTC timestamp of last modification (ISO 8601)
+          example: "2026-01-13T10:30:00Z"
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+        - error_code
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message
+          example: "Task with id 550e8400-e29b-41d4-a716-446655440000 not found"
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: "TASK_NOT_FOUND"
+        field_errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Field-specific validation errors (optional)
+          example:
+            title:
+              - "Title cannot be empty or whitespace only"
+
+  responses:
+    ValidationError:
+      description: Validation error (invalid request data)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Validation error"
+            error_code: "VALIDATION_ERROR"
+            field_errors:
+              title:
+                - "Title cannot be empty or whitespace only"
+                - "Ensure this value has at most 200 characters"
+
+    TaskNotFound:
+      description: Task not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Task with id 550e8400-e29b-41d4-a716-446655440000 not found"
+            error_code: "TASK_NOT_FOUND"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "An internal error occurred"
+            error_code: "INTERNAL_SERVER_ERROR"
