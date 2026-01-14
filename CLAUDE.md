@@ -234,3 +234,10 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- Python 3.11+ + FastAPI (latest stable), SQLModel (latest stable), Pydantic v2+ (001-task-api)
+- PostgreSQL via Neon DB (serverless PostgreSQL for dev and production) (001-task-api)
+
+## Recent Changes
+- 001-task-api: Added Python 3.11+ + FastAPI (latest stable), SQLModel (latest stable), Pydantic v2+
